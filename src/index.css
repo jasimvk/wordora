@@ -1,0 +1,264 @@
+/* Graphik font family with fallbacks */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* 
+  To use Graphik font properly, you need to:
+  1. License Graphik from Commercial Type (https://commercialtype.com/catalog/graphik)
+  2. Host the font files and replace this with:
+  
+  @font-face {
+    font-family: 'Graphik';
+    src: url('./fonts/Graphik-Regular.woff2') format('woff2'),
+         url('./fonts/Graphik-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  
+  Add similar @font-face declarations for Medium, Semibold, Bold weights
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Graphik', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  }
+  
+  body {
+    @apply bg-white min-h-screen;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #333;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    letter-spacing: -0.01em;
+  }
+  
+  /* Enhanced typography for Graphik */
+  h1, h2, h3, h4, h5, h6 {
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    letter-spacing: -0.02em;
+  }
+  
+  .font-graphik {
+    font-family: 'Graphik', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  }
+}
+
+@layer components {
+  /* NYT-style Header */
+  .nyt-container {
+    @apply max-w-6xl mx-auto px-4 py-6;
+  }
+  
+  .nyt-header {
+    @apply border-b-2 border-black pb-4 mb-6;
+  }
+  
+  .nyt-masthead {
+    font-family: 'Noto Serif', serif;
+    @apply text-5xl font-bold text-black text-center mb-2;
+    letter-spacing: 0.05em;
+  }
+  
+  .nyt-tagline {
+    @apply text-sm text-gray-600 text-center uppercase tracking-widest;
+    font-weight: 300;
+  }
+  
+  .nyt-date {
+    @apply text-xs text-gray-500 text-center mt-2 uppercase tracking-wide;
+  }
+  
+  /* Tab Navigation */
+  .tab-navigation {
+    @apply border-b border-gray-200 mb-8;
+  }
+  
+  .tab-button {
+    @apply pb-3 px-6 text-sm uppercase tracking-wide font-medium text-gray-600 cursor-pointer hover:text-black transition-colors;
+  }
+  
+  .tab-button.active {
+    @apply border-b-2 border-black text-black;
+  }
+  
+  /* Word of the Day Styles */
+  .article-container {
+    @apply bg-white border border-gray-200 mb-8 max-w-4xl mx-auto;
+  }
+  
+  .article-header {
+    @apply border-b border-gray-200 p-6 bg-gray-50;
+  }
+  
+  .article-headline {
+    font-family: 'Noto Serif', serif;
+    @apply text-4xl font-bold text-black mb-4 leading-tight;
+  }
+  
+  .article-subhead {
+    @apply text-lg text-gray-700 leading-relaxed;
+    font-style: italic;
+  }
+  
+  .article-content {
+    @apply p-6;
+  }
+  
+  .nyt-byline {
+    @apply text-sm text-gray-600 mb-4 font-medium;
+  }
+  
+  .nyt-section-header {
+    @apply text-xs uppercase tracking-widest font-bold text-gray-900 mb-3 border-b border-gray-300 pb-1;
+  }
+  
+  .etymology-section {
+    @apply border-l-4 border-gray-300 pl-4 mb-6 bg-gray-50 p-4;
+  }
+  
+  .usage-examples {
+    @apply space-y-4;
+  }
+  
+  .example-block {
+    @apply border-l border-gray-200 pl-4 py-2;
+  }
+  
+  .example-label {
+    @apply text-xs uppercase tracking-wide font-medium text-gray-500 mb-1;
+  }
+  
+  .example-text {
+    font-family: 'Noto Serif', serif;
+    @apply text-gray-800 italic text-lg leading-relaxed;
+  }
+  
+  /* PDF Reader Styles */
+  .pdf-container {
+    @apply flex-1 bg-gray-100 overflow-auto;
+  }
+  
+  .pdf-viewer {
+    @apply max-w-4xl mx-auto p-4;
+  }
+  
+  .pdf-page {
+    @apply bg-white shadow-lg rounded-lg mb-4 mx-auto;
+  }
+  
+  .loading-spinner {
+    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto;
+  }
+  
+  .url-input-container {
+    @apply bg-white border border-gray-200 p-8 max-w-2xl mx-auto;
+  }
+  
+  .url-input {
+    @apply w-full px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent text-lg;
+    font-family: 'Noto Serif', serif;
+  }
+  
+  .load-pdf-btn {
+    @apply w-full mt-4 px-6 py-3 bg-black text-white hover:bg-gray-800 transition-colors font-medium uppercase tracking-wide text-sm;
+  }
+  
+  .load-pdf-btn:disabled {
+    @apply opacity-50 cursor-not-allowed hover:bg-black;
+  }
+  
+  .reader-controls {
+    @apply flex items-center justify-between bg-white border-b border-gray-200 p-4 sticky top-0 z-40;
+  }
+  
+  .control-btn {
+    @apply px-4 py-2 border border-gray-300 hover:bg-gray-50 transition-colors text-sm font-medium;
+  }
+  
+  .control-btn:disabled {
+    @apply opacity-50 cursor-not-allowed hover:bg-white;
+  }
+  
+  .page-info {
+    @apply text-sm text-gray-700 bg-white px-4 py-2 border border-gray-300;
+  }
+  
+  .zoom-controls {
+    @apply flex items-center space-x-2;
+  }
+  
+  .zoom-btn {
+    @apply px-3 py-2 border border-gray-300 hover:bg-gray-50 text-sm font-medium;
+  }
+  
+  .zoom-level {
+    @apply text-sm text-gray-700 px-3;
+  }
+
+  /* Read It Later specific styles */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Smooth animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Dark mode styles */
+  .dark {
+    color-scheme: dark;
+  }
+
+  .dark .prose {
+    color: rgb(229, 231, 235);
+  }
+
+  .dark .prose h1,
+  .dark .prose h2,
+  .dark .prose h3,
+  .dark .prose h4 {
+    color: rgb(243, 244, 246);
+  }
+
+  .dark .prose strong {
+    color: rgb(243, 244, 246);
+  }
+
+  .dark .prose a {
+    color: rgb(96, 165, 250);
+  }
+
+  .dark .prose code {
+    color: rgb(156, 163, 175);
+    background-color: rgb(31, 41, 55);
+  }
+
+  .dark .prose pre {
+    background-color: rgb(17, 24, 39);
+  }
+
+  .dark .prose blockquote {
+    border-left-color: rgb(75, 85, 99);
+    color: rgb(156, 163, 175);
+  }
+}

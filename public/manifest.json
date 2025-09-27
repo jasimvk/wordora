@@ -1,0 +1,26 @@
+{
+  "name": "Booklet - Personal Library",
+  "short_name": "Booklet",
+  "description": "Your personal library to Save articles, PDFs, and documents for later reading. Distraction-free reading experience with offline support and clean typography.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "en-US"
+}
