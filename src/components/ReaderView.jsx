@@ -265,8 +265,8 @@ const ReaderView = ({ item, onClose, onUpdateProgress }) => {
   return (
     <div className={`fixed inset-0 z-50 flex flex-col ${theme === 'dark' ? 'dark bg-gray-900' : 'bg-white'}`}>
       {/* Header with controls */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-2 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+  <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto mb-2 sm:mb-0">
           <button 
             onClick={onClose}
             className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -283,7 +283,7 @@ const ReaderView = ({ item, onClose, onUpdateProgress }) => {
           </div>
         </div>
         
-        <div className="flex items-center space-x-2">
+  <div className="flex items-center space-x-1 sm:space-x-2 w-full sm:w-auto">
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
@@ -365,19 +365,19 @@ const ReaderView = ({ item, onClose, onUpdateProgress }) => {
       {/* Content */}
       <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900" ref={contentRef}>
         {item.type === 'PDF' ? (
-          <div className="flex justify-center p-4">
+          <div className="flex justify-center p-2 sm:p-4">
             <canvas 
               ref={canvasRef} 
               className="shadow-lg bg-white max-w-full h-auto"
             />
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto p-6">
+          <div className="w-full max-w-4xl mx-auto px-2 sm:px-6 py-4 sm:py-6">
             <article 
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 leading-relaxed text-gray-900 dark:text-gray-100"
-              style={{ fontSize: `${fontSize}px`, lineHeight: '1.6' }}
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 sm:p-8 leading-relaxed text-gray-900 dark:text-gray-100"
+              style={{ fontSize: `min(max(${fontSize}px, 15px), 22px)`, lineHeight: '1.6' }}
               dangerouslySetInnerHTML={{ 
-                __html: `<div class="prose prose-lg max-w-none dark:prose-invert">${formatContent(item.content, item.type)}</div>` 
+                __html: `<div class='prose prose-base sm:prose-lg max-w-none dark:prose-invert'>${formatContent(item.content, item.type)}</div>` 
               }}
             />
           </div>
@@ -386,7 +386,7 @@ const ReaderView = ({ item, onClose, onUpdateProgress }) => {
 
       {/* Reading progress indicator */}
       {item.readProgress > 0 && (
-        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-3 py-2 rounded-full text-sm font-medium shadow-lg">
+        <div className="fixed bottom-2 right-2 sm:bottom-4 sm:right-4 bg-blue-600 text-white px-3 py-2 rounded-full text-xs sm:text-sm font-medium shadow-lg">
           {Math.round(item.readProgress)}% read
         </div>
       )}
