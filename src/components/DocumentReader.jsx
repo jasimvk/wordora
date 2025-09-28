@@ -87,7 +87,7 @@ const DocumentReader = ({ documentUrl, onClose }) => {
     // Cache PDF for offline use
     if ('caches' in window) {
       try {
-        const cache = await caches.open('wordora-pdfs-v1');
+  const cache = await caches.open('booklet-pdfs-v1');
         await cache.add(documentUrl);
       } catch (cacheError) {
         console.warn('Failed to cache PDF:', cacheError);
@@ -110,7 +110,7 @@ const DocumentReader = ({ documentUrl, onClose }) => {
     // Cache text document for offline use
     if ('caches' in window) {
       try {
-        const cache = await caches.open('wordora-documents-v1');
+  const cache = await caches.open('booklet-documents-v1');
         await cache.add(documentUrl);
       } catch (cacheError) {
         console.warn('Failed to cache document:', cacheError);

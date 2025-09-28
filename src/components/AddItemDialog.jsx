@@ -5,12 +5,16 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
   const [tags, setTags] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [manualContent, setManualContent] = useState('');
+  const [useManualContent, setUseManualContent] = useState(false);
 
   const resetForm = () => {
     setUrl('');
     setTags('');
     setError('');
     setLoading(false);
+    setManualContent('');
+    setUseManualContent(false);
   };
 
   const handleClose = () => {
@@ -134,31 +138,51 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
       let content = '';
       let metadata = {};
 
-      // Fetch content
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
-        }
-        content = await response.text();
-      } catch (fetchError) {
-        // If direct fetch fails due to CORS, try with proxy
+      if (useManualContent && manualContent.trim()) {
+        // Use manually entered content
+        content = manualContent.trim();
+        metadata = await extractMetadata(url, content, type);
+      } else {
+        // Fetch content
         try {
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-          const response = await fetch(proxyUrl);
+          const response = await fetch(url);
           if (!response.ok) {
-            throw new Error(`Proxy fetch failed: ${response.status}`);
+            throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
           }
           content = await response.text();
-        } catch (proxyError) {
-          throw new Error('Unable to access this URL due to CORS restrictions. Try a different URL or ensure the site allows cross-origin requests.');
+        } catch (fetchError) {
+          // If direct fetch fails due to CORS, try with multiple proxy services
+          let contentFetched = false;
+          const proxyServices = [
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            `https://cors-anywhere.herokuapp.com/${url}`,
+            `https://thingproxy.freeboard.io/fetch/${url}`
+          ];
+
+          for (const proxyUrl of proxyServices) {
+            try {
+              const response = await fetch(proxyUrl);
+              if (response.ok) {
+                content = await response.text();
+                contentFetched = true;
+                break;
+              }
+            } catch (proxyError) {
+              // Try next proxy
+              continue;
+            }
+          }
+
+          if (!contentFetched) {
+            // Show manual content option
+            setUseManualContent(true);
+            throw new Error('Unable to access this URL due to CORS restrictions. You can paste the content manually below.');
+          }
         }
-      }
 
-      // Extract metadata
-      metadata = await extractMetadata(url, content, type);
-
-      // Create item object
+        // Extract metadata
+        metadata = await extractMetadata(url, content, type);
+      }      // Create item object
       const parsedTags = tags.trim() 
         ? tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
         : [];
@@ -266,6 +290,24 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
             <p className="mt-1 text-xs text-gray-500">Separate tags with commas (e.g., tech, article, later)</p>
           </div>
 
+          {/* Manual Content Input (shown when CORS fails) */}
+          {useManualContent && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Content (paste manually if URL fetch fails)
+              </label>
+              <textarea
+                value={manualContent}
+                onChange={(e) => setManualContent(e.target.value)}
+                placeholder="Paste the content here..."
+                rows={6}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm resize-vertical"
+                disabled={loading}
+              />
+              <p className="mt-1 text-xs text-gray-500">If the URL cannot be accessed due to CORS, paste the content here manually</p>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex space-x-2">
             <button
@@ -278,7 +320,7 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
             
             <button
               onClick={handleSave}
-              disabled={loading || !url.trim()}
+              disabled={loading || !url.trim() || (useManualContent && !manualContent.trim())}
               className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-graphik"
             >
               {loading ? (

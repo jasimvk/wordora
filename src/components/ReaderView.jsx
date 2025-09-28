@@ -5,7 +5,9 @@ import * as pdfjsLib from 'pdfjs-dist';
 // Set up PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
-const ReaderView = ({ item, onClose, onUpdateProgress }) => {
+import { upsertProgress, getProgress, saveHighlight, getHighlights, addBookmark, getBookmarks } from '../lib/supabaseApi';
+
+const ReaderView = ({ item, onClose, onUpdateProgress, userId = null }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -89,6 +91,34 @@ const ReaderView = ({ item, onClose, onUpdateProgress }) => {
     // eslint-disable-next-line
   }, [item, totalPages]);
 
+  // If userId is provided, load persisted progress/highlights/bookmarks for this item
+  useEffect(() => {
+    if (!userId || !item) return;
+    let mounted = true;
+    (async () => {
+      try {
+        const persisted = await getProgress(userId, item.id);
+        if (mounted && typeof persisted === 'number' && persisted > 0) {
+          // merge with local item progress
+          onUpdateProgress && onUpdateProgress(item.id, persisted);
+        }
+
+        const hs = await getHighlights(userId, item.id);
+        if (mounted && hs && hs.length) {
+          setHighlights(hs.map(h => ({ id: h.id, text: h.text, position: h.position || { top: 0, left: 0 } })));
+        }
+
+        const bms = await getBookmarks(userId, item.id);
+        if (mounted && bms && bms.length) {
+          setBookmarks(bms.map(b => b.position));
+        }
+      } catch (e) {
+        console.warn('Could not load persisted reader data', e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [userId, item, onUpdateProgress]);
+
   // Scroll to resume position after loading for articles
   useEffect(() => {
     if (item?.type !== 'PDF' && shouldScrollToResume.current && !loading && contentRef.current) {
@@ -120,6 +150,10 @@ const ReaderView = ({ item, onClose, onUpdateProgress }) => {
           
           if (progress > item.readProgress) {
             onUpdateProgress(item.id, progress);
+            // persist to Supabase when userId is provided
+            if (userId) {
+              upsertProgress(userId, item.id, progress).catch(err => console.warn('Failed to persist progress', err));
+            }
           }
         }, 500);
       };
@@ -320,6 +354,9 @@ const ReaderView = ({ item, onClose, onUpdateProgress }) => {
         };
         setHighlights(prev => [...prev, newHighlight]);
         selection.removeAllRanges();
+        if (userId) {
+          saveHighlight(userId, item.id, newHighlight).catch(e => console.warn('Failed to save highlight', e));
+        }
       }
     }
   };
@@ -328,6 +365,9 @@ const ReaderView = ({ item, onClose, onUpdateProgress }) => {
     if (contentRef.current) {
       const scrollTop = contentRef.current.scrollTop;
       setBookmarks(prev => [...prev, scrollTop]);
+      if (userId) {
+        addBookmark(userId, item.id, scrollTop).catch(e => console.warn('Failed to save bookmark', e));
+      }
     }
   };
 

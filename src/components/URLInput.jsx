@@ -175,7 +175,7 @@ const URLInput = ({ onLoadDocument, recentDocuments = [] }) => {
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded text-sm text-left">
               <p className="font-medium text-blue-800 mb-2">� Supported Formats</p>
               <p className="text-blue-700 mb-2">
-                Wordora can read various document formats:
+                Booklet can read various document formats:
               </p>
               <ul className="mt-2 text-blue-700 text-xs list-disc list-inside space-y-1">
                 <li><strong>Text:</strong> .txt, .md, .markdown files</li>

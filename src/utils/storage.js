@@ -3,11 +3,13 @@
 
 const STORAGE_KEY = 'booklet-saved-items';
 
+const getStorageKey = (userId) => `booklet-saved-items-${userId || 'anonymous'}`;
+
 export const StorageManager = {
   // Get all saved items
-  getAllItems: () => {
+  getAllItems: (userId) => {
     try {
-      const items = localStorage.getItem(STORAGE_KEY);
+      const items = localStorage.getItem(getStorageKey(userId));
       return items ? JSON.parse(items) : [];
     } catch (error) {
       console.error('Failed to load saved items:', error);
@@ -16,11 +18,11 @@ export const StorageManager = {
   },
 
   // Save a new item
-  saveItem: (item) => {
+  saveItem: (item, userId) => {
     try {
-      const items = StorageManager.getAllItems();
+      const items = StorageManager.getAllItems(userId);
       const newItems = [item, ...items];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newItems));
+      localStorage.setItem(getStorageKey(userId), JSON.stringify(newItems));
       return true;
     } catch (error) {
       console.error('Failed to save item:', error);
@@ -29,13 +31,13 @@ export const StorageManager = {
   },
 
   // Update an existing item
-  updateItem: (itemId, updates) => {
+  updateItem: (itemId, updates, userId) => {
     try {
-      const items = StorageManager.getAllItems();
+      const items = StorageManager.getAllItems(userId);
       const updatedItems = items.map(item => 
         item.id === itemId ? { ...item, ...updates } : item
       );
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedItems));
+      localStorage.setItem(getStorageKey(userId), JSON.stringify(updatedItems));
       return true;
     } catch (error) {
       console.error('Failed to update item:', error);
@@ -44,11 +46,11 @@ export const StorageManager = {
   },
 
   // Delete an item
-  deleteItem: (itemId) => {
+  deleteItem: (itemId, userId) => {
     try {
-      const items = StorageManager.getAllItems();
+      const items = StorageManager.getAllItems(userId);
       const filteredItems = items.filter(item => item.id !== itemId);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredItems));
+      localStorage.setItem(getStorageKey(userId), JSON.stringify(filteredItems));
       return true;
     } catch (error) {
       console.error('Failed to delete item:', error);
@@ -57,9 +59,9 @@ export const StorageManager = {
   },
 
   // Get a single item by ID
-  getItem: (itemId) => {
+  getItem: (itemId, userId) => {
     try {
-      const items = StorageManager.getAllItems();
+      const items = StorageManager.getAllItems(userId);
       return items.find(item => item.id === itemId);
     } catch (error) {
       console.error('Failed to get item:', error);
@@ -68,21 +70,21 @@ export const StorageManager = {
   },
 
   // Update reading progress
-  updateProgress: (itemId, progress) => {
+  updateProgress: (itemId, progress, userId) => {
     return StorageManager.updateItem(itemId, { 
       readProgress: Math.max(0, Math.min(100, progress)),
       lastRead: new Date().toISOString()
-    });
+    }, userId);
   },
 
   // Toggle favorite status
-  toggleFavorite: (itemId) => {
+  toggleFavorite: (itemId, userId) => {
     try {
-      const item = StorageManager.getItem(itemId);
+      const item = StorageManager.getItem(itemId, userId);
       if (item) {
         return StorageManager.updateItem(itemId, { 
           isFavorite: !item.isFavorite 
-        });
+        }, userId);
       }
       return false;
     } catch (error) {
@@ -91,15 +93,16 @@ export const StorageManager = {
     }
   },
 
-  // Add tags to an item
-  addTag: (itemId, tag) => {
+    // Add tags to an item
+  addTag: (itemId, tag, userId) => {
     try {
-      const item = StorageManager.getItem(itemId);
+      const item = StorageManager.getItem(itemId, userId);
       if (item) {
         const tags = item.tags || [];
         if (!tags.includes(tag)) {
-          tags.push(tag);
-          return StorageManager.updateItem(itemId, { tags });
+          return StorageManager.updateItem(itemId, { 
+            tags: [...tags, tag] 
+          }, userId);
         }
       }
       return false;
@@ -109,13 +112,15 @@ export const StorageManager = {
     }
   },
 
-  // Remove tag from an item
-  removeTag: (itemId, tag) => {
+    // Remove tag from an item
+  removeTag: (itemId, tag, userId) => {
     try {
-      const item = StorageManager.getItem(itemId);
+      const item = StorageManager.getItem(itemId, userId);
       if (item) {
-        const tags = (item.tags || []).filter(t => t !== tag);
-        return StorageManager.updateItem(itemId, { tags });
+        const tags = item.tags || [];
+        return StorageManager.updateItem(itemId, { 
+          tags: tags.filter(t => t !== tag) 
+        }, userId);
       }
       return false;
     } catch (error) {
@@ -125,9 +130,9 @@ export const StorageManager = {
   },
 
   // Get storage statistics
-  getStats: () => {
+  getStats: (userId) => {
     try {
-      const items = StorageManager.getAllItems();
+      const items = StorageManager.getAllItems(userId);
       const totalItems = items.length;
       const articles = items.filter(item => item.type !== 'PDF').length;
       const pdfs = items.filter(item => item.type === 'PDF').length;
@@ -160,9 +165,9 @@ export const StorageManager = {
   },
 
   // Export all data (for backup)
-  exportData: () => {
+  exportData: (userId) => {
     try {
-      const items = StorageManager.getAllItems();
+      const items = StorageManager.getAllItems(userId);
       const exportData = {
         version: '1.0',
         exportDate: new Date().toISOString(),
@@ -176,11 +181,11 @@ export const StorageManager = {
   },
 
   // Import data (from backup)
-  importData: (jsonData) => {
+  importData: (jsonData, userId) => {
     try {
       const data = JSON.parse(jsonData);
       if (data.items && Array.isArray(data.items)) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data.items));
+        localStorage.setItem(getStorageKey(userId), JSON.stringify(data.items));
         return true;
       }
       return false;
@@ -191,9 +196,9 @@ export const StorageManager = {
   },
 
   // Clear all data
-  clearAll: () => {
+  clearAll: (userId) => {
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(getStorageKey(userId));
       return true;
     } catch (error) {
       console.error('Failed to clear data:', error);
