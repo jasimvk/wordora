@@ -55,7 +55,7 @@ const LandingPage = ({ onGetStarted }) => {
       {/* Minimal Hero */}
   <main className="flex-1 flex flex-col items-center justify-center px-3 sm:px-6 py-4 sm:py-8 min-h-0">
   <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 mb-3 sm:mb-4 font-graphik tracking-tight leading-tight text-center">
-          Save. Organize. Read.
+          Save It, Read It Later
         </h1>
   <p className="text-sm xs:text-base sm:text-lg text-gray-500 mb-3 sm:mb-5 max-w-xs xs:max-w-sm sm:max-w-xl text-center font-graphik">
           Booklet lets you save articles, PDFs, and documents from anywhere on the web, then read them anytime in a clean, distraction-free interface—online or offline.
