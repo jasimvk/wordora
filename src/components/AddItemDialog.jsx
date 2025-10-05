@@ -25,6 +25,20 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
   };
 
   const detectContentType = (url) => {
+    // Check for social media platforms first
+    if (url.includes('twitter.com') || url.includes('x.com')) {
+      return 'Tweet';
+    }
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      return 'Video';
+    }
+    if (url.includes('linkedin.com')) {
+      return 'LinkedIn';
+    }
+    if (url.includes('reddit.com')) {
+      return 'Reddit';
+    }
+    
     const extension = url.split('.').pop().toLowerCase().split('?')[0];
     const typeMap = {
       'pdf': 'PDF',
@@ -48,7 +62,116 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
     let cleanContent = content;
 
     try {
-      if (type === 'Article' || type === 'HTML') {
+      if (type === 'Tweet') {
+        // Handle Twitter/X content
+        const isPlainText = !content.includes('<html') && !content.includes('<!DOCTYPE');
+        
+        if (isPlainText) {
+          // Handle manually entered plain text content
+          const lines = content.split('\n').filter(line => line.trim());
+          const isThread = lines.length > 3 || content.includes('/') || content.includes('🧵');
+          
+          if (isThread) {
+            title = 'Twitter Thread';
+            excerpt = lines[0]?.substring(0, 200) + '...';
+            
+            // Format thread content with numbering if not already numbered
+            threadContent = lines
+              .map((line, index) => {
+                const trimmed = line.trim();
+                if (/^\d+[./]/.test(trimmed) || /^\(\d+\/\d+\)/.test(trimmed)) {
+                  return trimmed; // Already numbered
+                }
+                return trimmed ? `${index + 1}. ${trimmed}` : '';
+              })
+              .filter(line => line)
+              .join('\n\n');
+          } else {
+            title = 'Tweet';
+            excerpt = content.substring(0, 200);
+            threadContent = content;
+          }
+          
+          readingTime = Math.max(1, Math.ceil(content.split(/\s+/).length / 200));
+        } else {
+          // Handle HTML content from fetched pages
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(content, 'text/html');
+          
+          // Extract tweet content
+          const tweetText = doc.querySelector('[data-testid="tweetText"]')?.textContent ||
+                           doc.querySelector('.tweet-text')?.textContent ||
+                           doc.querySelector('[role="article"] [data-testid="tweetText"]')?.textContent;
+        
+          // Extract author info
+          const authorName = doc.querySelector('[data-testid="User-Name"]')?.textContent ||
+                            doc.querySelector('.username')?.textContent ||
+                            doc.querySelector('[data-testid="User-Name"] span')?.textContent;
+          
+          // Extract thread if it exists
+          const threadElements = doc.querySelectorAll('[data-testid="tweetText"]');
+          let threadContent = '';
+          
+          if (threadElements.length > 1) {
+            threadContent = Array.from(threadElements)
+              .map((el, index) => `${index + 1}. ${el.textContent}`)
+              .join('\n\n');
+            title = `Thread by ${authorName || 'Twitter User'}`;
+            excerpt = threadElements[0]?.textContent?.substring(0, 200) + '...';
+          } else if (tweetText) {
+            title = `Tweet by ${authorName || 'Twitter User'}`;
+            excerpt = tweetText.substring(0, 200);
+            threadContent = tweetText;
+          }
+          
+          // Extract images
+          const images = doc.querySelectorAll('[data-testid="tweetPhoto"] img, .media img');
+          if (images.length > 0) {
+            thumbnail = images[0].src;
+          }
+          
+          // Fallback to meta tags if direct extraction fails
+          if (!tweetText && !threadContent) {
+            const metaDescription = doc.querySelector('meta[name="description"]')?.getAttribute('content') ||
+                                   doc.querySelector('meta[property="og:description"]')?.getAttribute('content');
+            const metaTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+                             doc.querySelector('title')?.textContent;
+            
+            if (metaDescription) {
+              title = metaTitle || 'Twitter/X Post';
+              excerpt = metaDescription.substring(0, 200);
+              threadContent = metaDescription;
+            }
+          }
+          
+          // Calculate reading time for HTML content  
+          if (!readingTime) {
+            const words = (threadContent || tweetText || '').split(/\s+/).length;
+            readingTime = Math.max(1, Math.ceil(words / 200));
+          }
+        }
+        
+        // Clean and format the content
+        const finalContent = threadContent || content || 'Unable to extract tweet content. The content may require direct access to Twitter/X.';
+        cleanContent = DOMPurify.sanitize(finalContent, {
+          ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a'],
+          ALLOWED_ATTR: ['href'],
+          REMOVE_TAGS: ['script', 'style'],
+          REMOVE_ATTR: ['style', 'class', 'id']
+        });
+        
+        // Format as readable content if it's not already HTML
+        if (!cleanContent.includes('<p>') && !cleanContent.includes('<br>')) {
+          cleanContent = cleanContent
+            .split('\n\n')
+            .filter(para => para.trim())
+            .map(paragraph => `<p>${paragraph.trim()}</p>`)
+            .join('');
+        }
+        
+        console.log('🐦 Twitter content extracted:', { title, excerpt: excerpt?.substring(0, 50) });
+        
+      } else if (type === 'Article' || type === 'HTML') {
         // Create a new document for Readability parsing
         const parser = new DOMParser();
         const doc = parser.parseFromString(content, 'text/html');
@@ -213,7 +336,11 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
           
           // If direct fetch fails due to CORS, try with multiple proxy services
           let contentFetched = false;
+          const isSocialMedia = validUrl.href.includes('twitter.com') || validUrl.href.includes('x.com') || 
+                               validUrl.href.includes('linkedin.com') || validUrl.href.includes('reddit.com');
+          
           const proxyServices = [
+            `https://api.allorigins.win/get?url=${encodeURIComponent(validUrl.href)}`, // Returns JSON with contents
             `https://api.allorigins.win/raw?url=${encodeURIComponent(validUrl.href)}`,
             `https://cors-anywhere.herokuapp.com/${encodeURIComponent(validUrl.href)}`,
             `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(validUrl.href)}`
@@ -232,8 +359,21 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
               });
               
               if (response.ok) {
-                content = await response.text();
-                console.log('Proxy fetch successful');
+                const responseText = await response.text();
+                
+                // Handle JSON response from allorigins
+                if (proxyUrl.includes('allorigins.win/get')) {
+                  try {
+                    const jsonData = JSON.parse(responseText);
+                    content = jsonData.contents || responseText;
+                  } catch (e) {
+                    content = responseText;
+                  }
+                } else {
+                  content = responseText;
+                }
+                
+                console.log('Proxy fetch successful, content length:', content.length);
                 contentFetched = true;
                 break;
               } else {
@@ -250,7 +390,12 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
             console.log('All proxy attempts failed, showing manual content option');
             // Show manual content option
             setUseManualContent(true);
-            throw new Error('Unable to access this URL due to CORS restrictions. You can paste the content manually below.');
+            
+            if (isSocialMedia) {
+              throw new Error('Unable to access Twitter/X content directly due to restrictions. Please copy and paste the tweet text manually below, or try using a Twitter thread unroll service first.');
+            } else {
+              throw new Error('Unable to access this URL due to CORS restrictions. You can paste the content manually below.');
+            }
           }
         }
 
@@ -357,7 +502,14 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
                   onChange={(e) => setUseManualContent(e.target.checked)}
                   className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
                 />
-                <span className="font-light">Add content manually</span>
+                <span className="font-light">
+                  Add content manually
+                  {url && (url.includes('twitter.com') || url.includes('x.com')) && (
+                    <span className="text-xs text-blue-600 block mt-1">
+                      💡 For Twitter/X: Copy the tweet text or use a thread unroll service like ThreadReaderApp
+                    </span>
+                  )}
+                </span>
               </label>
               
               {useManualContent && (
@@ -365,11 +517,24 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
                   <textarea
                     value={manualContent}
                     onChange={(e) => setManualContent(e.target.value)}
-                    placeholder="Enter your content here..."
-                    rows={4}
+                    placeholder={url && (url.includes('twitter.com') || url.includes('x.com')) 
+                      ? "Paste the tweet text here...\n\nFor threads, you can:\n1. Copy each tweet separately\n2. Use ThreadReaderApp to unroll the thread\n3. Number each tweet (1/n, 2/n, etc.)"
+                      : "Enter your content here..."}
+                    rows={url && (url.includes('twitter.com') || url.includes('x.com')) ? 6 : 4}
                     className="w-full px-4 py-3 border border-gray-200 focus:outline-none focus:border-gray-400 font-light text-sm resize-none"
                     disabled={loading}
                   />
+                  
+                  {url && (url.includes('twitter.com') || url.includes('x.com')) && (
+                    <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded text-xs">
+                      <p className="text-blue-800 mb-2"><strong>Need help with Twitter threads?</strong></p>
+                      <div className="space-y-1 text-blue-700">
+                        <p>• Visit <a href="https://threadreaderapp.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-900">ThreadReaderApp.com</a> to unroll threads</p>
+                        <p>• Or copy each tweet manually and separate them with blank lines</p>
+                        <p>• Include thread numbers if available (1/n, 2/n, etc.)</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
