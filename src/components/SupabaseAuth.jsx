@@ -82,7 +82,7 @@ export default function SupabaseAuth({ isOpen = false, onClose = () => {}, onSig
         className="relative bg-white rounded-xl shadow-xl border border-gray-100 w-full max-w-md p-4 transform transition-all duration-150 ease-out"
       >
         <div className="flex items-center justify-between mb-3">
-          <h3 id="auth-modal-title" className="text-lg font-semibold text-gray-900">Sign in to Booklet</h3>
+          <h3 id="auth-modal-title" className="text-lg font-semibold text-gray-900">Sign in to Clipit</h3>
           <button onClick={onClose} aria-label="Close sign in dialog" className="text-gray-500 hover:text-gray-700 rounded p-1">✕</button>
         </div>
 

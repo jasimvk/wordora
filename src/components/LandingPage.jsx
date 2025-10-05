@@ -1,102 +1,115 @@
 import { useState } from 'react';
-import { BookOpenIcon, StarIcon, DevicePhoneMobileIcon, MagnifyingGlassIcon, ChartBarIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
 
 const LandingPage = ({ onGetStarted }) => {
-  const [email, setEmail] = useState('');
-
-  const features = [
-    {
-      icon: <BookOpenIcon className="h-10 w-10 mx-auto text-red-500" />, // Save Anything
-      title: 'Save Anything',
-      description: 'Articles, PDFs, and documents from anywhere on the web'
-    },
-    {
-      icon: <StarIcon className="h-10 w-10 mx-auto text-yellow-400" />, // Organize
-      title: 'Organize',
-      description: 'Favorite important reads and organize with tags'
-    },
-    {
-      icon: <DevicePhoneMobileIcon className="h-10 w-10 mx-auto text-blue-500" />, // Read Later
-      title: 'Read Later',
-      description: 'Clean, distraction-free reading experience'
-    },
-    {
-      icon: <MagnifyingGlassIcon className="h-10 w-10 mx-auto text-green-500" />, // Search
-      title: 'Search',
-      description: 'Find your saved content instantly with smart search'
-    },
-    {
-      icon: <ChartBarIcon className="h-10 w-10 mx-auto text-purple-500" />, // Track Progress
-      title: 'Track Progress',
-      description: 'Monitor your reading progress and completed articles'
-    },
-    {
-      icon: <ArchiveBoxIcon className="h-10 w-10 mx-auto text-gray-500" />, // Archive
-      title: 'Archive',
-      description: 'Keep your reading list organized with archive feature'
-    }
-  ];
-
   return (
-  <div className="min-h-screen flex flex-col bg-white">
-      {/* Minimal Header */}
-  <header className="py-2 border-b border-gray-100 bg-white/90 backdrop-blur-sm">
-          <div className="max-w-2xl mx-auto flex items-center justify-center px-2 sm:px-4">
-            <span className="inline-flex items-center">
-              <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7">
-                <rect width="32" height="32" rx="8" fill="#EF4444"/>
-                <text x="16" y="21" textAnchor="middle" fontFamily="Graphik, Inter, sans-serif" fontWeight="bold" fontSize="18" fill="white">B</text>
-              </svg>
-            </span>
-            <span className="ml-2 text-base font-semibold text-gray-900 font-graphik tracking-tight">Booklet</span>
+    <div className="min-h-screen bg-gray-50">
+      {/* Clipit-style Header */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gray-800 rounded flex items-center justify-center">
+                <span className="text-white font-bold text-sm">C</span>
+              </div>
+              <span className="text-xl font-light text-gray-900">Clipit</span>
+            </div>
+            <nav className="hidden md:flex items-center space-x-8">
+              <a href="#" className="text-gray-600 hover:text-gray-900 font-light">Features</a>
+              <a href="#" className="text-gray-600 hover:text-gray-900 font-light">Pricing</a>
+              <a href="#" className="text-gray-600 hover:text-gray-900 font-light">Support</a>
+              <button 
+                onClick={onGetStarted}
+                className="bg-gray-800 text-white px-6 py-2 font-light hover:bg-gray-700 transition-colors"
+              >
+                Log In
+              </button>
+            </nav>
           </div>
-        </header>
+        </div>
+      </header>
 
-      {/* Minimal Hero */}
-  <main className="flex-1 flex flex-col items-center justify-center px-3 sm:px-6 py-4 sm:py-8 min-h-0">
-  <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-light text-gray-900 mb-3 sm:mb-4 font-graphik tracking-tight leading-tight text-center">
-          Save It, Read It Later
-        </h1>
-  <p className="text-sm xs:text-base sm:text-lg text-gray-500 mb-3 sm:mb-5 max-w-xs xs:max-w-sm sm:max-w-xl text-center font-graphik">
-          Booklet lets you save articles, PDFs, and documents from anywhere on the web, then read them anytime in a clean, distraction-free interface—online or offline.
-        </p>
-  <div className="w-full flex justify-center mb-3 sm:mb-4">
+      {/* Hero Section */}
+      <main className="max-w-4xl mx-auto px-6 py-16">
+        <div className="text-center mb-16">
+          <h1 className="text-5xl md:text-6xl font-light text-gray-900 mb-6 leading-tight">
+            Save articles.<br />
+            Read them later.
+          </h1>
+          <p className="text-xl font-light text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+            Clipit is the simplest way to save and store articles for reading: offline, on-the-go, anytime, anywhere.
+          </p>
           <button
             onClick={onGetStarted}
-            className="bg-red-500 text-white w-full xs:w-auto px-4 py-1.5 rounded-full text-xs xs:text-sm font-medium hover:bg-red-600 transition-colors font-graphik shadow-sm"
-            style={{ maxWidth: 200 }}
+            className="bg-gray-800 text-white px-8 py-3 text-lg font-light hover:bg-gray-700 transition-colors"
           >
-            Start Reading
+            Try Clipit Free
           </button>
         </div>
 
-        {/* Minimal Features - show only 3 on mobile, scrollable if more */}
-        <div className="flex w-full max-w-xs xs:max-w-md sm:max-w-2xl overflow-x-auto gap-4 sm:gap-8 mt-2 sm:mt-4 pb-2 hide-scrollbar">
-          {features.slice(0, 3).map((feature, idx) => (
-            <div key={idx} className="flex flex-col items-center min-w-[90px] py-2">
-              <div className="mb-1">{feature.icon}</div>
-              <span className="text-xs sm:text-sm font-medium text-gray-900 font-graphik mb-0.5 text-center">{feature.title}</span>
-              <span className="text-[11px] sm:text-xs text-gray-400 text-center font-graphik">{feature.description}</span>
-            </div>
-          ))}
-        </div>
-  </main>
-        {/* App Store / Play Store Coming Soon Section */}
-        <div className="w-full flex flex-col items-center mt-4 mb-2">
-          <div className="flex flex-row items-center justify-center gap-3 sm:gap-4 mb-2 w-full max-w-xs xs:max-w-md">
-            <img src="/appstore.png" alt="Download on the App Store" className="h-10 w-auto rounded shadow opacity-60" style={{ filter: 'grayscale(1)' }} />
-            <img src="/googleplay.png" alt="Get it on Google Play" className="h-10 w-auto rounded shadow opacity-60" style={{ filter: 'grayscale(1)' }} />
-            <img src="/chromewebstore.png" alt="Available in the Chrome Web Store" className="h-8 w-auto rounded shadow opacity-60" style={{ filter: 'grayscale(1)' }} />
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-2 gap-12 mb-16">
+          <div className="space-y-6">
+            <h2 className="text-2xl font-light text-gray-900">Simple to save</h2>
+            <p className="text-gray-600 font-light leading-relaxed">
+              Save articles and web pages from any browser, smartphone, or app. Everything syncs automatically across all your devices.
+            </p>
+          </div>
+          <div className="space-y-6">
+            <h2 className="text-2xl font-light text-gray-900">Beautiful to read</h2>
+            <p className="text-gray-600 font-light leading-relaxed">
+              Enjoy a clean, distraction-free reading experience. Customize fonts, text size, and backgrounds to match your preferences.
+            </p>
+          </div>
+          <div className="space-y-6">
+            <h2 className="text-2xl font-light text-gray-900">Works everywhere</h2>
+            <p className="text-gray-600 font-light leading-relaxed">
+              Read saved articles on any device, even when you're offline. Your reading list is always with you.
+            </p>
+          </div>
+          <div className="space-y-6">
+            <h2 className="text-2xl font-light text-gray-900">Smart organization</h2>
+            <p className="text-gray-600 font-light leading-relaxed">
+              Automatically organize your articles with folders, highlights, and notes. Find what you need instantly with powerful search.
+            </p>
           </div>
         </div>
-    
 
-      {/* Minimal Footer */}
-  <footer className="py-2 border-t border-gray-100 mt-auto">
-          <div className="max-w-2xl mx-auto px-2 sm:px-4 text-center">
-            <span className="text-[9px] text-gray-300 font-graphik">Booklet &mdash; Read Later</span>
+        {/* CTA Section */}
+        <div className="text-center bg-white rounded-lg p-12 border border-gray-200">
+          <h3 className="text-3xl font-light text-gray-900 mb-4">
+            Ready to start reading?
+          </h3>
+          <p className="text-gray-600 font-light mb-6">
+            Join millions of people using Clipit to save and read articles.
+          </p>
+          <button
+            onClick={onGetStarted}
+            className="bg-gray-800 text-white px-8 py-3 text-lg font-light hover:bg-gray-700 transition-colors"
+          >
+            Get Started Free
+          </button>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 mt-16">
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center space-x-2 mb-4 md:mb-0">
+              <div className="w-6 h-6 bg-gray-800 rounded flex items-center justify-center">
+                <span className="text-white font-bold text-xs">C</span>
+              </div>
+              <span className="font-light text-gray-900">Clipit</span>
+            </div>
+            <div className="flex space-x-6 text-sm font-light text-gray-600">
+              <a href="#" className="hover:text-gray-900">Privacy</a>
+              <a href="#" className="hover:text-gray-900">Terms</a>
+              <a href="#" className="hover:text-gray-900">Help</a>
+              <a href="#" className="hover:text-gray-900">Contact</a>
+            </div>
           </div>
-        </footer>
+        </div>
+      </footer>
     </div>
   );
 };

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'booklet-v1';
-const DOCUMENT_CACHE_NAME = 'booklet-documents-v1';
+const CACHE_NAME = 'clipit-v1';
+const DOCUMENT_CACHE_NAME = 'clipit-documents-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

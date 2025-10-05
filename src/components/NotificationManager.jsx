@@ -51,7 +51,7 @@ const NotificationManager = () => {
     
     // Fallback: Show immediate test notification
     if (Notification.permission === 'granted') {
-  new Notification('Booklet Notifications Enabled! 🎉', {
+  new Notification('Clipit Notifications Enabled! 🎉', {
         body: 'You\'ll receive daily word notifications at 9 AM',
         icon: '/icon-192.png',
         badge: '/icon-192.png'

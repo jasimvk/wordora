@@ -2,19 +2,19 @@ import { useState } from 'react';
 
 const AddItemDialog = ({ isOpen, onClose, onSave }) => {
   const [url, setUrl] = useState('');
-  const [tags, setTags] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [manualContent, setManualContent] = useState('');
   const [useManualContent, setUseManualContent] = useState(false);
+  const [manualContent, setManualContent] = useState('');
+  const [tags, setTags] = useState('');
 
   const resetForm = () => {
     setUrl('');
-    setTags('');
     setError('');
     setLoading(false);
-    setManualContent('');
     setUseManualContent(false);
+    setManualContent('');
+    setTags('');
   };
 
   const handleClose = () => {
@@ -134,46 +134,74 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
     setError('');
 
     try {
-      const type = detectContentType(url);
+      // Validate and clean URL
+      const cleanUrl = url.trim();
+      let validUrl;
+      
+      try {
+        // Try to create a URL object to validate the URL
+        validUrl = new URL(cleanUrl.startsWith('http') ? cleanUrl : `https://${cleanUrl}`);
+        console.log('Processing URL:', validUrl.href);
+      } catch (urlError) {
+        throw new Error('Please enter a valid URL');
+      }
+
+      const type = detectContentType(validUrl.href);
       let content = '';
       let metadata = {};
 
       if (useManualContent && manualContent.trim()) {
         // Use manually entered content
         content = manualContent.trim();
-        metadata = await extractMetadata(url, content, type);
+        metadata = await extractMetadata(validUrl.href, content, type);
       } else {
         // Fetch content
         try {
-          const response = await fetch(url);
+          const response = await fetch(validUrl.href);
           if (!response.ok) {
             throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
           }
           content = await response.text();
         } catch (fetchError) {
+          console.log('Direct fetch failed:', fetchError.message);
+          
           // If direct fetch fails due to CORS, try with multiple proxy services
           let contentFetched = false;
           const proxyServices = [
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-            `https://cors-anywhere.herokuapp.com/${url}`,
-            `https://thingproxy.freeboard.io/fetch/${url}`
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(validUrl.href)}`,
+            `https://cors-anywhere.herokuapp.com/${encodeURIComponent(validUrl.href)}`,
+            `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(validUrl.href)}`
           ];
 
-          for (const proxyUrl of proxyServices) {
+          for (let i = 0; i < proxyServices.length; i++) {
+            const proxyUrl = proxyServices[i];
             try {
-              const response = await fetch(proxyUrl);
+              console.log(`Trying proxy ${i + 1}:`, proxyUrl);
+              const response = await fetch(proxyUrl, {
+                method: 'GET',
+                headers: {
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                },
+                signal: AbortSignal.timeout(10000) // 10 second timeout
+              });
+              
               if (response.ok) {
                 content = await response.text();
+                console.log('Proxy fetch successful');
                 contentFetched = true;
                 break;
+              } else {
+                console.log(`Proxy ${i + 1} failed with status:`, response.status);
               }
             } catch (proxyError) {
+              console.log(`Proxy ${i + 1} error:`, proxyError.message);
               // Try next proxy
               continue;
             }
           }
 
           if (!contentFetched) {
+            console.log('All proxy attempts failed, showing manual content option');
             // Show manual content option
             setUseManualContent(true);
             throw new Error('Unable to access this URL due to CORS restrictions. You can paste the content manually below.');
@@ -181,7 +209,7 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
         }
 
         // Extract metadata
-        metadata = await extractMetadata(url, content, type);
+        metadata = await extractMetadata(validUrl.href, content, type);
       }      // Create item object
       const parsedTags = tags.trim() 
         ? tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
@@ -189,7 +217,7 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
         
       const item = {
         id: Date.now().toString(),
-        url: url.trim(),
+        url: validUrl.href,
         type: type,
         title: metadata.title,
         excerpt: metadata.excerpt,
@@ -244,92 +272,103 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full">
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4 z-50">
+      <div className="bg-white max-w-md w-full shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <h2 className="text-lg font-medium text-gray-900 font-graphik">Add to Booklet</h2>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-light text-gray-900">Add article</h2>
+            <button
+              onClick={handleClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="p-4">
-          {/* URL Input */}
-          <div className="mb-4">
+        <div className="p-6">
+          <div className="mb-6">
             <input
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="Paste a link"
-              className="w-full px-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-base"
+              placeholder="Paste a link here"
+              className="w-full px-4 py-3 border border-gray-200 focus:outline-none focus:border-gray-400 font-light text-lg"
               disabled={loading}
               autoFocus
             />
+            
+            {/* Manual content option */}
+            <div className="mt-4">
+              <label className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useManualContent}
+                  onChange={(e) => setUseManualContent(e.target.checked)}
+                  className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
+                />
+                <span className="font-light">Add content manually</span>
+              </label>
+              
+              {useManualContent && (
+                <div className="mt-3">
+                  <textarea
+                    value={manualContent}
+                    onChange={(e) => setManualContent(e.target.value)}
+                    placeholder="Enter your content here..."
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-200 focus:outline-none focus:border-gray-400 font-light text-sm resize-none"
+                    disabled={loading}
+                  />
+                </div>
+              )}
+            </div>
+            
+            {/* Tags input */}
+            <div className="mt-4">
+              <input
+                type="text"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="Tags (comma-separated)"
+                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-gray-400 font-light text-sm"
+                disabled={loading}
+              />
+              <p className="mt-1 text-xs text-gray-500 font-light">
+                Add tags separated by commas (e.g., tech, article, important)
+              </p>
+            </div>
+            
             {error && (
-              <p className="mt-2 text-sm text-red-500">{error}</p>
+              <p className="mt-3 text-sm text-red-600 font-light">{error}</p>
             )}
           </div>
 
-          {/* Tags Input */}
-          <div className="mb-4">
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="Add tags (comma separated)"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
-              disabled={loading}
-            />
-            <p className="mt-1 text-xs text-gray-500">Separate tags with commas (e.g., tech, article, later)</p>
-          </div>
-
-          {/* Manual Content Input (shown when CORS fails) */}
-          {useManualContent && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Content (paste manually if URL fetch fails)
-              </label>
-              <textarea
-                value={manualContent}
-                onChange={(e) => setManualContent(e.target.value)}
-                placeholder="Paste the content here..."
-                rows={6}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm resize-vertical"
-                disabled={loading}
-              />
-              <p className="mt-1 text-xs text-gray-500">If the URL cannot be accessed due to CORS, paste the content here manually</p>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex space-x-2">
+          <div className="flex space-x-3">
             <button
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50 transition-colors"
+              className="px-6 py-3 text-gray-600 hover:text-gray-900 disabled:opacity-50 transition-colors font-light"
             >
               Cancel
             </button>
             
             <button
               onClick={handleSave}
-              disabled={loading || !url.trim() || (useManualContent && !manualContent.trim())}
-              className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-graphik"
+              disabled={loading || (!url.trim() || (useManualContent && !manualContent.trim()))}
+              className="flex-1 bg-gray-800 text-white py-3 px-6 font-light hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Adding...
+                  Saving...
                 </div>
               ) : (
-                'Add'
+                'Save'
               )}
             </button>
           </div>

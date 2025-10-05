@@ -1,7 +1,7 @@
 {
-  "name": "Booklet - Personal Library",
-  "short_name": "Booklet",
-  "description": "Your personal library to Save articles, PDFs, and documents for later reading. Distraction-free reading experience with offline support and clean typography.",
+  "name": "Clipit - Personal Library",
+  "short_name": "Clipit",
+  "description": "Your personal library to save articles, PDFs, and documents for later reading. Distraction-free reading experience with offline support and clean typography.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

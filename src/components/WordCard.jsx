@@ -12,7 +12,7 @@ const WordCard = ({ word }) => {
         <h1 className="article-headline">{word.word}</h1>
         <p className="article-subhead">"{word.meaning}"</p>
         <div className="nyt-byline mt-4">
-          By The Booklet Editorial Team
+          By The Clipit Editorial Team
         </div>
       </div>
 

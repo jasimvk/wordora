@@ -1,9 +1,9 @@
 // Simple localStorage-based storage for saved items
 // In a production app, you'd want to use IndexedDB for better performance and storage limits
 
-const STORAGE_KEY = 'booklet-saved-items';
+const STORAGE_KEY = 'clipit-saved-items';
 
-const getStorageKey = (userId) => `booklet-saved-items-${userId || 'anonymous'}`;
+const getStorageKey = (userId) => `clipit-saved-items-${userId || 'anonymous'}`;
 
 export const StorageManager = {
   // Get all saved items
@@ -91,6 +91,39 @@ export const StorageManager = {
       console.error('Failed to toggle favorite:', error);
       return false;
     }
+  },
+
+  // Toggle archive status
+  toggleArchive: (itemId, userId) => {
+    try {
+      const item = StorageManager.getItem(itemId, userId);
+      if (item) {
+        return StorageManager.updateItem(itemId, { 
+          isArchived: !item.isArchived 
+        }, userId);
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to toggle archive:', error);
+      return false;
+    }
+  },
+
+  // Mark as read (readProgress >= 90)
+  markAsRead: (itemId, userId) => {
+    return StorageManager.updateItem(itemId, { 
+      readProgress: 100,
+      lastRead: new Date().toISOString(),
+      isRead: true
+    }, userId);
+  },
+
+  // Mark as unread
+  markAsUnread: (itemId, userId) => {
+    return StorageManager.updateItem(itemId, { 
+      readProgress: 0,
+      isRead: false
+    }, userId);
   },
 
     // Add tags to an item

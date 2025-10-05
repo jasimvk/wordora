@@ -1,7 +1,7 @@
 
 
 
-# Booklet – Minimal Pocket/Raindrop Alternative
+# Clipit – Minimal Pocket/Raindrop Alternative
 
 ## Features
 
