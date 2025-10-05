@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import DOMPurify from 'dompurify';
+import { Readability } from '@mozilla/readability';
 
 const AddItemDialog = ({ isOpen, onClose, onSave }) => {
   const [url, setUrl] = useState('');
@@ -43,48 +45,91 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
     let excerpt = '';
     let thumbnail = null;
     let readingTime = null;
+    let cleanContent = content;
 
     try {
       if (type === 'Article' || type === 'HTML') {
-        // For HTML content, try to parse with simple DOM parsing
+        // Create a new document for Readability parsing
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        
+        // Clone the document for Readability (required for proper parsing)
+        const docClone = doc.cloneNode(true);
+        
+        // Use Mozilla Readability to extract clean article content
+        const article = new Readability(docClone, {
+          charThreshold: 500,
+          classesToPreserve: [],
+          keepClasses: false
+        }).parse();
+
+        if (article) {
+          console.log('✅ Readability successfully parsed article:', article.title);
+          title = article.title || title;
+          excerpt = article.excerpt || '';
+          
+          // Clean the content and remove unwanted elements
+          cleanContent = DOMPurify.sanitize(article.content, {
+            ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'a', 'img'],
+            ALLOWED_ATTR: ['href', 'src', 'alt', 'title'],
+            REMOVE_TAGS: ['script', 'style', 'iframe', 'object', 'embed'],
+            REMOVE_ATTR: ['style', 'class', 'id', 'data-*']
+          });
+          
+          console.log('🧹 Content cleaned by DOMPurify, length:', cleanContent.length);
+          
+          // Calculate reading time from clean text
+          const textContent = article.textContent || '';
+          const words = textContent.split(/\s+/).length;
+          readingTime = Math.max(1, Math.ceil(words / 200));
+        } else {
+          console.log('⚠️ Readability failed, using fallback HTML parsing');
+          // Fallback to basic HTML parsing if Readability fails
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = content;
+        
+          // Extract title
+          const titleElement = tempDiv.querySelector('title') || 
+                              tempDiv.querySelector('h1') || 
+                              tempDiv.querySelector('h2');
+          if (titleElement) {
+            title = titleElement.textContent.trim();
+          }
+          
+          // Extract excerpt from meta description or first paragraph
+          const metaDesc = tempDiv.querySelector('meta[name="description"]');
+          if (metaDesc) {
+            excerpt = metaDesc.getAttribute('content');
+          } else {
+            const firstP = tempDiv.querySelector('p');
+            if (firstP) {
+              excerpt = firstP.textContent.trim().substring(0, 200) + '...';
+            }
+          }
+          
+          // Clean the basic HTML content
+          cleanContent = DOMPurify.sanitize(content, {
+            ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'a', 'img'],
+            ALLOWED_ATTR: ['href', 'src', 'alt', 'title'],
+            REMOVE_TAGS: ['script', 'style', 'iframe', 'object', 'embed'],
+            REMOVE_ATTR: ['style', 'class', 'id']
+          });
+          
+          // Calculate reading time
+          const textContent = tempDiv.textContent || '';
+          const words = textContent.split(/\s+/).length;
+          readingTime = Math.max(1, Math.ceil(words / 200));
+        }
+        
+        // Extract thumbnail from meta tags
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = content;
-        
-        // Extract title
-        const titleElement = tempDiv.querySelector('title') || 
-                            tempDiv.querySelector('h1') || 
-                            tempDiv.querySelector('h2');
-        if (titleElement) {
-          title = titleElement.textContent.trim();
-        }
-        
-        // Extract excerpt from meta description or first paragraph
-        const metaDesc = tempDiv.querySelector('meta[name="description"]');
-        if (metaDesc) {
-          excerpt = metaDesc.getAttribute('content');
-        } else {
-          const firstP = tempDiv.querySelector('p');
-          if (firstP) {
-            excerpt = firstP.textContent.trim().substring(0, 200) + '...';
-          }
-        }
-        
-        // Extract thumbnail from meta image or first img
         const metaImg = tempDiv.querySelector('meta[property="og:image"]') ||
                        tempDiv.querySelector('meta[name="twitter:image"]');
         if (metaImg) {
           thumbnail = metaImg.getAttribute('content');
-        } else {
-          const firstImg = tempDiv.querySelector('img');
-          if (firstImg) {
-            thumbnail = firstImg.src;
-          }
         }
         
-        // Calculate reading time
-        const textContent = tempDiv.textContent || '';
-        const words = textContent.split(/\s+/).length;
-        readingTime = Math.max(1, Math.ceil(words / 200));
       } else {
         // For other types, extract title from URL
         const filename = url.split('/').pop().split('?')[0];
@@ -120,7 +165,8 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
       title: title || 'Untitled Document',
       excerpt: excerpt || '',
       thumbnail: thumbnail,
-      readingTime: readingTime ? `${readingTime} min read` : null
+      readingTime: readingTime ? `${readingTime} min read` : null,
+      content: cleanContent // Return the cleaned content
     };
   };
 
@@ -223,7 +269,7 @@ const AddItemDialog = ({ isOpen, onClose, onSave }) => {
         excerpt: metadata.excerpt,
         thumbnail: metadata.thumbnail,
         readingTime: metadata.readingTime,
-        content: content,
+        content: metadata.content || content, // Use cleaned content if available
         dateAdded: new Date().toISOString(),
         isFavorite: false,
         readProgress: 0,

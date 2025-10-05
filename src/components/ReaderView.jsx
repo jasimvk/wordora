@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import DOMPurify from 'dompurify';
 
 const ReaderView = ({ item, onClose, onUpdateProgress, userId = null }) => {
   const [fontSize, setFontSize] = useState(18);
@@ -75,12 +76,25 @@ const ReaderView = ({ item, onClose, onUpdateProgress, userId = null }) => {
   const formatContent = (content) => {
     if (!content) return '';
     
-    // Simple content formatting
-    return content
-      .replace(/\n\n/g, '</p><p class="mb-6">')
-      .replace(/\n/g, '<br>')
-      .replace(/^/, '<p class="mb-6">')
-      .replace(/$/, '</p>');
+    // Check if content contains HTML tags
+    const hasHtmlTags = /<[^>]*>/g.test(content);
+    
+    if (hasHtmlTags) {
+      // Sanitize HTML content to ensure it's safe and clean
+      return DOMPurify.sanitize(content, {
+        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'span', 'div'],
+        ALLOWED_ATTR: ['href', 'src', 'alt', 'title'],
+        REMOVE_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
+        REMOVE_ATTR: ['style', 'class', 'id', 'onclick', 'onload', 'onerror']
+      });
+    } else {
+      // Simple text content formatting
+      return content
+        .replace(/\n\n/g, '</p><p class="mb-6">')
+        .replace(/\n/g, '<br>')
+        .replace(/^/, '<p class="mb-6">')
+        .replace(/$/, '</p>');
+    }
   };
 
   return (
@@ -242,12 +256,17 @@ const ReaderView = ({ item, onClose, onUpdateProgress, userId = null }) => {
 
           {/* Article Body */}
           <div
-            className="prose prose-lg max-w-none"
+            className="prose prose-lg max-w-none article-content"
             style={{
               fontSize: `${fontSize}px`,
               lineHeight: lineHeight,
               fontFamily: fontFamily === 'system-ui' ? 'system-ui, -apple-system, sans-serif' : fontFamily,
-              color: theme === 'dark' ? '#e5e7eb' : theme === 'sepia' ? '#1f2937' : '#111827'
+              color: theme === 'dark' ? '#e5e7eb' : theme === 'sepia' ? '#1f2937' : '#111827',
+              // CSS isolation to prevent external styles from interfering
+              all: 'unset',
+              display: 'block',
+              width: '100%',
+              boxSizing: 'border-box'
             }}
             dangerouslySetInnerHTML={{
               __html: formatContent(item.content || item.excerpt || 'No content available.')

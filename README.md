@@ -34,8 +34,8 @@
 **Steps:**
 
 ```bash
-git clone https://github.com/yourusername/booklet.git
-cd booklet
+git clone https://github.com/jasimvk/wordora.git
+cd wordora
 npm install
 npm run dev
 ```
@@ -95,7 +95,7 @@ package.json
 README.md
 
 ## PWA Features
-- Installable: Add Booklet to your home screen
+- Installable: Add Clipit to your home screen
 - Offline support: Read and manage your library anywhere
 - Responsive: Mobile and desktop ready
 
