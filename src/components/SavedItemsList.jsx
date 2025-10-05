@@ -99,7 +99,7 @@ const SavedItemsList = ({
       {sortedItems.map((item) => (
         <article
           key={item.id}
-          className={`bg-white border-b border-gray-100 p-6 hover:bg-gray-50 transition-colors cursor-pointer group relative ${
+          className={`bg-white border-b border-gray-100 p-4 md:p-6 hover:bg-gray-50 transition-colors cursor-pointer group relative ${
             item.isRead || item.readProgress >= 90 ? 'opacity-75' : ''
           }`}
           onClick={() => onItemSelect(item)}
@@ -115,7 +115,7 @@ const SavedItemsList = ({
           )}
           
           <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0 pr-4">
+            <div className="flex-1 min-w-0 pr-2 md:pr-4">
               <div className="flex items-center space-x-2 mb-2">
                 <h2 className={`text-lg font-light leading-tight line-clamp-2 ${
                   item.isRead || item.readProgress >= 90 
@@ -162,7 +162,7 @@ const SavedItemsList = ({
             </div>
 
             {/* Actions */}
-            <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center space-x-1 md:space-x-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
               {/* Read/Unread Toggle */}
               <button
                 onClick={(e) => {
@@ -173,7 +173,7 @@ const SavedItemsList = ({
                     onMarkAsRead(item.id);
                   }
                 }}
-                className={`text-gray-400 hover:text-gray-700 transition-colors ${
+                className={`p-2 md:p-1 text-gray-400 hover:text-gray-700 transition-colors rounded-full md:rounded-none hover:bg-gray-100 md:hover:bg-transparent ${
                   item.isRead || item.readProgress >= 90 ? 'text-green-600' : ''
                 }`}
                 title={item.isRead || item.readProgress >= 90 ? "Mark as unread" : "Mark as read"}
@@ -189,7 +189,7 @@ const SavedItemsList = ({
                   e.stopPropagation();
                   onToggleFavorite(item.id);
                 }}
-                className={`text-gray-400 hover:text-gray-700 transition-colors ${
+                className={`p-2 md:p-1 text-gray-400 hover:text-gray-700 transition-colors rounded-full md:rounded-none hover:bg-gray-100 md:hover:bg-transparent ${
                   item.isFavorite ? 'text-yellow-500' : ''
                 }`}
                 title={item.isFavorite ? "Unstar" : "Star"}
@@ -204,7 +204,7 @@ const SavedItemsList = ({
                   e.stopPropagation();
                   onArchiveItem(item.id);
                 }}
-                className="text-gray-400 hover:text-gray-700 transition-colors"
+                className="p-2 md:p-1 text-gray-400 hover:text-gray-700 transition-colors rounded-full md:rounded-none hover:bg-gray-100 md:hover:bg-transparent"
                 title={item.isArchived ? "Unarchive" : "Archive"}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,7 +217,7 @@ const SavedItemsList = ({
                   e.stopPropagation();
                   onItemDelete(item.id);
                 }}
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="p-2 md:p-1 text-gray-400 hover:text-red-500 transition-colors rounded-full md:rounded-none hover:bg-gray-100 md:hover:bg-transparent"
                 title="Delete"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

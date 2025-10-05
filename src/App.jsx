@@ -32,7 +32,7 @@ function AppInner() {
   const [currentItem, setCurrentItem] = useState(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState('mylist'); // 'mylist', 'favorites', 'archive'
+  const [currentView, setCurrentView] = useState('all'); // 'all', 'mylist', 'favorites', 'archive'
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
@@ -78,11 +78,63 @@ function AppInner() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Filter items based on current view and search query
-  const filteredItems = savedItems.filter(item =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (item.notes && item.notes.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredItems = savedItems.filter(item => {
+    // First filter by view
+    let matchesView = true;
+    
+    switch (currentView) {
+      case 'all': // All non-archived items
+        matchesView = !item.isArchived;
+        break;
+      case 'mylist': // Unread items
+        matchesView = !item.isArchived && (!item.isRead && item.readProgress < 90);
+        break;
+      case 'read': // Read items
+        matchesView = !item.isArchived && (item.isRead || item.readProgress >= 90);
+        break;
+      case 'favorites': // Starred items
+        matchesView = !item.isArchived && item.isFavorite;
+        break;
+      case 'archive': // Archived items
+        matchesView = item.isArchived;
+        break;
+      default:
+        matchesView = !item.isArchived; // Default to showing all non-archived
+    }
+    
+    // Then filter by search query if provided
+    const matchesSearch = !searchQuery || 
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.notes && item.notes.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    return matchesView && matchesSearch;
+  });
+
+  // Get counts for each view
+  const getViewCounts = () => {
+    const unreadCount = savedItems.filter(item => 
+      !item.isArchived && (!item.isRead && item.readProgress < 90)
+    ).length;
+    
+    const readCount = savedItems.filter(item => 
+      !item.isArchived && (item.isRead || item.readProgress >= 90)
+    ).length;
+    
+    const starredCount = savedItems.filter(item => 
+      !item.isArchived && item.isFavorite
+    ).length;
+    
+    const archivedCount = savedItems.filter(item => 
+      item.isArchived
+    ).length;
+    
+    const allCount = savedItems.filter(item => !item.isArchived).length;
+    
+    return { unreadCount, readCount, starredCount, archivedCount, allCount };
+  };
+
+  const { unreadCount, readCount, starredCount, archivedCount, allCount } = getViewCounts();
 
   // Close search overlay when clicking outside or when ESC is pressed
   useEffect(() => {
@@ -580,34 +632,79 @@ function AppInner() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="flex space-x-8">
             <button
+              onClick={() => setCurrentView('all')}
+              className={`py-4 text-sm font-light border-b-2 transition-colors flex items-center space-x-2 ${
+                currentView === 'all'
+                  ? 'border-gray-800 text-gray-900'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <span>All</span>
+              {allCount > 0 && (
+                <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                  {allCount}
+                </span>
+              )}
+            </button>
+            <button
               onClick={() => setCurrentView('mylist')}
-              className={`py-4 text-sm font-light border-b-2 transition-colors ${
+              className={`py-4 text-sm font-light border-b-2 transition-colors flex items-center space-x-2 ${
                 currentView === 'mylist'
                   ? 'border-gray-800 text-gray-900'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              Unread
+              <span>Unread</span>
+              {unreadCount > 0 && (
+                <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setCurrentView('read')}
+              className={`py-4 text-sm font-light border-b-2 transition-colors flex items-center space-x-2 ${
+                currentView === 'read'
+                  ? 'border-gray-800 text-gray-900'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <span>Read</span>
+              {readCount > 0 && (
+                <span className="bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full">
+                  {readCount}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setCurrentView('favorites')}
-              className={`py-4 text-sm font-light border-b-2 transition-colors ${
+              className={`py-4 text-sm font-light border-b-2 transition-colors flex items-center space-x-2 ${
                 currentView === 'favorites'
                   ? 'border-gray-800 text-gray-900'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              Starred
+              <span>Starred</span>
+              {starredCount > 0 && (
+                <span className="bg-yellow-100 text-yellow-600 text-xs px-2 py-1 rounded-full">
+                  {starredCount}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setCurrentView('archive')}
-              className={`py-4 text-sm font-light border-b-2 transition-colors ${
+              className={`py-4 text-sm font-light border-b-2 transition-colors flex items-center space-x-2 ${
                 currentView === 'archive'
                   ? 'border-gray-800 text-gray-900'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              Archive
+              <span>Archive</span>
+              {archivedCount > 0 && (
+                <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                  {archivedCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
